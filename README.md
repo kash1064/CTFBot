@@ -2,6 +2,7 @@
 
 - [Discord bot](#discord-bot)
   - [Botの作り方](#botの作り方)
+  - [.env](#env)
   - [/get\_event](#get_event)
     - [event登録](#event登録)
     - [event参加](#event参加)
@@ -12,6 +13,20 @@
 ## Botの作り方
 
 [createBot.md](./createBot.md)を参照してください。
+
+## .env
+
+README.mdと同じ階層に、.envを配置してください。
+
+TOKENは、createBot.mdで言及されているように記述をしてください。
+BOT_ROLEは、以下であればCTFBotと入れてください。
+
+![](image/2025-03-16-17-55-22.png)
+
+```text
+TOKEN=
+BOT_ROLE=
+```
 
 ## /get_event
 

@@ -13,7 +13,8 @@ import pytz
 from dotenv import load_dotenv
 
 load_dotenv(verbose=True)
-token = os.getenv("TOKEN")  # bot token
+TOKEN = os.getenv("TOKEN")  # bot token
+BOT_ROLE = os.getenv("BOT_ROLE")
 
 intent = discord.Intents()
 intent.messages = True # on_messageを実行するために必要な処理。
@@ -95,11 +96,12 @@ class Set_CTF_Window(ui.Modal):
             return
 
         # create category
+        bot_role = discord.utils.get(guild.roles, name=BOT_ROLE)
         ctf_category = await guild.create_category(name=ctf_name, overwrites={
             guild.default_role: discord.PermissionOverwrite(
                 read_messages=False,
             ),
-            guild.me: discord.PermissionOverwrite(
+            bot_role: discord.PermissionOverwrite(
                 read_messages=True,
                 view_channel=True,
             )
@@ -149,12 +151,15 @@ async def on_ready():
 # リアクションが押された時の処理。
 # categoryに読み取り権限を与える。
 @client.event   
-async def on_reaction_add(reaction, user):
-    guild = reaction.message.guild
-    
-    if reaction.message.author.bot:
+async def on_raw_reaction_add(payload):
+    guild = client.get_guild(payload.guild_id)
+    text_channel = client.get_channel(payload.channel_id)
+    message = await text_channel.fetch_message(payload.message_id)
+    user = client.get_user(payload.user_id)
+
+    if message.author.bot:
         # botの出力する内容は、"register ctf-name"なので、"register "を消し去ると、ctf名が取得可能となる
-        category_name = reaction.message.content.replace("registered ", "")
+        category_name = message.content.replace("registered ", "")
 
         category = discord.utils.get(guild.categories, name=category_name)
 
@@ -163,11 +168,12 @@ async def on_reaction_add(reaction, user):
                 # memberにcategoryの読み取り権限を与える。
                 member = guild.get_member(user.id)
                 await category.set_permissions(member, read_messages=True)
+                await message.channel.send(f"{member.name} join {category_name}")
 
             except Exception as e:
                 print(e)
         else:
-            channel = reaction.message.channel
+            channel = message.channel
             await channel.send(f"Error: category not found...")
 
     return
@@ -234,5 +240,5 @@ async def set_event(interaction, event_id=None):
     # create modal window
     window = Set_CTF_Window(name=name, url=url, password=password, start=start, finish=finish)
     await interaction.response.send_modal(modal=window)
-        
-client.run(token)
+
+client.run(TOKEN)
