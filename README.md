@@ -1,5 +1,14 @@
 # Discord bot
 
+- [Discord bot](#discord-bot)
+  - [Botの作り方](#botの作り方)
+  - [/get\_event](#get_event)
+    - [event登録](#event登録)
+    - [event参加](#event参加)
+  - [/set\_event ](#set_event-)
+    - [id指定する方法](#id指定する方法)
+    - [id指定しない方法](#id指定しない方法)
+
 ## Botの作り方
 
 [createBot.md](./createBot.md)を参照してください。
