@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 load_dotenv(verbose=True)
 TOKEN = os.getenv("TOKEN")  # bot token
 BOT_ROLE = os.getenv("BOT_ROLE")
+PASSWORD_LENGTH = int(os.getenv("PASSWORD_LENGTH"))
+CHANNEL_URL = os.getenv("CHANNEL_URL")
+BOT_CHANNEL_ID = int(CHANNEL_URL.split("/")[-1])
 
 intent = discord.Intents()
 intent.messages = True # on_messageを実行するために必要な処理。
@@ -24,6 +27,7 @@ intent.members = True
 intent.reactions = True
 intent.message_content = True
 client = discord.Bot(intents=intent)
+
 
 # CTFを選択するためのUI
 class Get_CTF_Window(ui.Select):
@@ -92,7 +96,7 @@ class Set_CTF_Window(ui.Modal):
         finish = self.finish.value
 
         if discord.utils.get(guild.categories, name=ctf_name):
-            await interaction.response.send_message(f"400 Error {ctf_name} is already exists")
+            await interaction.response.send_message(f"400 Error {ctf_name} is already exists", delete_after=10.0, ephemeral=True)
             return
 
         # create category
@@ -119,15 +123,18 @@ class Set_CTF_Window(ui.Modal):
         # create text channel and voice channel in ctf_category
         await ctf_category.create_text_channel("info", topic=topic)
         await ctf_category.create_voice_channel('voice')
-
-        await interaction.response.send_message(f"registered {ctf_name}")
+        channel = client.get_channel(BOT_CHANNEL_ID)
+        try:
+            await channel.send(f"registered {ctf_name}", silent=True)
+            await interaction.response.send_message("done", delete_after=3, ephemeral=True)
+        except Exception as e:
+            print(e, flush=True)
         return
 
 # CTFの登録時にパスワード付与
 def password_generator():
-    length = 16
     characters = string.ascii_letters + string.digits
-    password = ''.join(random.choice(characters) for _ in range(length))
+    password = ''.join(random.choice(characters) for _ in range(PASSWORD_LENGTH))
     return password
 
 # UTC to JST
@@ -146,7 +153,8 @@ def utc_to_jst(date):
 # 動作確認用
 @client.event
 async def on_ready():
-    print("Hello! I am CTF Bot!")
+    channel = client.get_channel(BOT_CHANNEL_ID)
+    await channel.send("CTFBot is running!", silent=True, delete_after=10.0)
 
 # リアクションが押された時の処理。
 # categoryに読み取り権限を与える。
@@ -168,13 +176,13 @@ async def on_raw_reaction_add(payload):
                 # memberにcategoryの読み取り権限を与える。
                 member = guild.get_member(user.id)
                 await category.set_permissions(member, read_messages=True)
-                await message.channel.send(f"{member.name} join {category_name}")
+                await message.channel.send(f"{member.name} join {category_name}", silent=True)
 
             except Exception as e:
                 print(e)
         else:
             channel = message.channel
-            await channel.send(f"Error: category not found...")
+            await channel.send(f"Error: category not found...", silent=True, delete_after=10.0)
 
     return
 
@@ -200,7 +208,8 @@ async def get_event(interaction):
     # create view 
     view = ui.View()
     view.add_item(Get_CTF_Window(info_list))
-    await interaction.send("select", view=view)
+    await interaction.send("select", view=view, silent=True, delete_after=30.0)
+
 
 # /set_eventが呼ばれたら処理を開始。
 # ctf timesにないCTFでも登録できるようにする。
@@ -220,7 +229,7 @@ async def set_event(interaction, event_id=None):
             headers = {'User-Agent':'Mozilla/5.0'} # apiを叩いても怒られないように
             response = requests.get(url, headers=headers)
             if response.status_code != 200:
-                await interaction.response.send_message(f"404 Error")
+                await interaction.response.send_message(f"404 Error", ephemeral=True, delete_after=10.0)
                 return
             informations = json.loads(response.text)
 
@@ -234,7 +243,7 @@ async def set_event(interaction, event_id=None):
             finish = utc_to_jst(informations['finish'])
         except Exception as e:
             print(e)
-            await interaction.respose.send_message(f"Error")
+            await interaction.response.send_message(f"Error", ephemeral=True, delete_after=10.0)
             return
         
     # create modal window
