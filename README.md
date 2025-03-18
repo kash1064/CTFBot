@@ -100,3 +100,27 @@ CTF 参加者は、Botが発言した「registered xxxCTF」のメッセージ�
 ![](image/2025-03-16-15-44-03.png)
 
 CTF Timeに登録されていないやつを登録するために存在しています。
+
+## Note: Azure VM でのデプロイ
+
+``` bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3.11 python3-pip -y
+
+sudo su
+mkdir -p ~/CTFBot
+
+echo 'export TOKEN=XXX' >> ~/.bashrc
+echo 'export BOT_ROLE=CTFBot' >> ~/.bashrc
+echo 'export PASSWORD_LENGTH=16' >> ~/.bashrc
+echo 'export CHANNEL_URL=https://discord.com/channels/XXX/XXX' >> ~/.bashrc
+source ~/.bashrc
+
+cd /root/CTFBot
+wget https://raw.githubusercontent.com/kash1064/CTFBot/refs/heads/main/src/bot.py
+wget https://raw.githubusercontent.com/kash1064/CTFBot/refs/heads/main/src/requirements.txt
+pip3 install -r requirements.txt
+python3 bot.py
+
+history -c
+```
